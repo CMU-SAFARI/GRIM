@@ -14,6 +14,7 @@ The algorithm of GRIM-Filter is described at: [J.S. Kim et al., GRIM-Filter: Fas
 
 In order to run GRIM-Filter, have the following files: 
 * Human Genome FASTA file (e.g., [Human_g1k_v37 Genome](ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/technical/.../human_g1k_v37.fasta.gz))
+* Read Sequence data sets (FASTA file) 
 
 ## Getting Started
 
@@ -41,7 +42,6 @@ your Genome FASTA File.
 You can then use the bitvectors by running mrfast with the following command: 
 ```
 ./mrfast --search <Genome FASTA File> -b <Token Size> -t 1 -e <error Tolerance (%)> -k <Number of Bins> -q 1 --seq <Read Sequences FASTA File>
-```
 ```
 
 ## Contributors 
