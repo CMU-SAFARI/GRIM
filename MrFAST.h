@@ -119,7 +119,7 @@ extern long long			completedSeqCnt;
 extern long long            vseedeCnt;
 extern long long            full_vseedeCnt;
 extern long long            skipCnt;
-extern long long            skip_same_bucket_skip; 
+extern long long            skip_same_bin_skip; 
 extern long long            bv_skipCnt;
 extern long long            DP_fail;
 extern long long            error3_fail;

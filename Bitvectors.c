@@ -3,9 +3,9 @@ Jeremie Kim
 Modifications to the FastHASH infrastructure to include custom filter.
 
 This filter creates bitvectors for each permutation representing the existence 
-of that given permutation in a bucket. We split up the genome into a number 
-of buckets that gives a statistically significant sparsity of sequence existence
-across the buckets. 
+of that given permutation in a bin. We split up the genome into a number 
+of bins that gives a statistically significant sparsity of sequence existence
+across the bins. 
 
 */
 
@@ -32,10 +32,10 @@ unsigned SEQUENCE_LENGTH = 100;
 double bv_totalCheckTime = 0;
 unsigned bitvectorsSize = 0;
 long long fbitvectorSize = 0;
-unsigned CUR_NUM_BUCKETS = 0;
+unsigned CUR_NUM_BINS = 0;
 unsigned iter = 0;
 unsigned checkBitvectors_iter = 1;
-unsigned last_bucket_num = 0;
+unsigned last_bin_num = 0;
 double avg_checkTime = 0;
 long long total_bitvectorsSize = 0;
 /*************************************************/
@@ -50,14 +50,14 @@ void generateIBitvectors(char *refGenome_filename, char *bv_fileName) {
     int flag, l, hv, tmp;
     unsigned int i;
     
-    ints_per_perm = pow(4, BV_SUBSEQ_SIZE)/32;
+    ints_per_perm = pow(4, BV_TOKEN_SIZE)/32;
 
     _bv_fp = fileOpen(bv_fileName, "w");
 
     // write the subsequence size used to generate the bitvectors.
-    tmp = fwrite(&BV_SUBSEQ_SIZE, sizeof(BV_SUBSEQ_SIZE), 1, _bv_fp);
-    tmp = fwrite(&BV_BUCKET_SIZE, sizeof(BV_BUCKET_SIZE), 1, _bv_fp);
-    tmp = fwrite(&BV_NUM_BUCKETS, sizeof(BV_NUM_BUCKETS), 1, _bv_fp);
+    tmp = fwrite(&BV_TOKEN_SIZE, sizeof(BV_TOKEN_SIZE), 1, _bv_fp);
+    tmp = fwrite(&BV_BIN_SIZE, sizeof(BV_BIN_SIZE), 1, _bv_fp);
+    tmp = fwrite(&BV_NUM_BINS, sizeof(BV_NUM_BINS), 1, _bv_fp);
     tmp = fwrite(&BV_MULTIPLICITY, sizeof(BV_MULTIPLICITY), 1, _bv_fp);
     if (tmp == 0) {
         fprintf(stderr, "Write error while initializing the bitvectors.\n");
@@ -86,10 +86,10 @@ void generateIBitvectors(char *refGenome_filename, char *bv_fileName) {
             fflush(stderr);
         }
         
-        l = strlen(refGen) - BV_SUBSEQ_SIZE;
+        l = strlen(refGen) - BV_TOKEN_SIZE;
 
-        CUR_NUM_BUCKETS = strlen(refGen) / BV_BUCKET_SIZE;
-        bitvectorsSize = 4*(pow(4, BV_SUBSEQ_SIZE)/32) * CUR_NUM_BUCKETS * BV_MULTIPLICITY;
+        CUR_NUM_BINS = strlen(refGen) / BV_BIN_SIZE;
+        bitvectorsSize = 4*(pow(4, BV_TOKEN_SIZE)/32) * CUR_NUM_BINS * BV_MULTIPLICITY;
         _bitvector = getMem(bitvectorsSize);
         
         for (i = 0; i < l; i++) {
@@ -132,7 +132,7 @@ int bv_hashVal(char *seq) {
     int i = 0;
     int val = 0, numericVal = 0;
 
-    while (i < BV_SUBSEQ_SIZE) {
+    while (i < BV_TOKEN_SIZE) {
         //printf("%c", seq[i]);
         switch (seq[i]) {
             case 'A':
@@ -161,16 +161,16 @@ int bv_hashVal(char *seq) {
 // specific to 100 length sequences. 
 int update_BV(int hv, int offset) {
     int i;
-    int start_bucket = (offset - (SEQUENCE_LENGTH + generate_BV_threshold - 1)) / BV_BUCKET_SIZE;
-    if (offset < (SEQUENCE_LENGTH - 1)) { start_bucket = 0; }
-    int end_bucket = offset / BV_BUCKET_SIZE;
+    int start_bin = (offset - (SEQUENCE_LENGTH + generate_BV_threshold - 1)) / BV_BIN_SIZE;
+    if (offset < (SEQUENCE_LENGTH - 1)) { start_bin = 0; }
+    int end_bin = offset / BV_BIN_SIZE;
     unsigned BV_offset = hv / ints_per_perm;
     unsigned int_offset = (ints_per_perm - 1) - (hv % ints_per_perm);
 
-    for (i = start_bucket; i <= end_bucket; i++) {
+    for (i = start_bin; i <= end_bin; i++) {
         unsigned tmp; 
-        if (i > (CUR_NUM_BUCKETS - 1)) {
-            tmp = ints_per_perm * (CUR_NUM_BUCKETS - 1) + BV_offset;
+        if (i > (CUR_NUM_BINS - 1)) {
+            tmp = ints_per_perm * (CUR_NUM_BINS - 1) + BV_offset;
         }
         else {
             tmp = ints_per_perm * i + BV_offset;
@@ -179,8 +179,8 @@ int update_BV(int hv, int offset) {
         // for multiplicity, we multiply the size of the bitvectors by the multiplicity 
         // and replicate the format. 
         for (j = 0; j < BV_MULTIPLICITY; j++) {
-            //tmp += ints_per_perm * (CUR_NUM_BUCKETS);
-            int tmp2 = tmp + j * ints_per_perm * CUR_NUM_BUCKETS;
+            //tmp += ints_per_perm * (CUR_NUM_BINS);
+            int tmp2 = tmp + j * ints_per_perm * CUR_NUM_BINS;
             if (!(1 & (_bitvector[tmp2] >> int_offset))) {
                 _bitvector[tmp2] |= (1 << int_offset);
                 break;
@@ -205,10 +205,10 @@ void configBV()
 
 int initLoadingBitvectors(char *fileName) {
     int tmp;
-    ints_per_perm = pow(4, BV_SUBSEQ_SIZE)/32;
+    ints_per_perm = pow(4, BV_TOKEN_SIZE)/32;
     generate_BV_threshold = (SEQUENCE_LENGTH * 5) / 100; // max error threshold of 5%
     nuc_threshold = (SEQUENCE_LENGTH * errThreshold) / 100;
-    read_sequence_count = getMem(pow(4, BV_SUBSEQ_SIZE));
+    read_sequence_count = getMem(pow(4, BV_TOKEN_SIZE));
     printf("generate_BV_threshold: %d\n", generate_BV_threshold);
     printf("nuc_threshold: %d\n", nuc_threshold);
     _bv_fp = fileOpen(fileName, "r");
@@ -216,18 +216,18 @@ int initLoadingBitvectors(char *fileName) {
         return 0;
     }
 
-    tmp = fread(&BV_SUBSEQ_SIZE, sizeof(BV_SUBSEQ_SIZE), 1, _bv_fp);
-    tmp = fread(&BV_BUCKET_SIZE, sizeof(BV_BUCKET_SIZE), 1, _bv_fp);
-    tmp = fread(&BV_NUM_BUCKETS, sizeof(BV_NUM_BUCKETS), 1, _bv_fp);
+    tmp = fread(&BV_TOKEN_SIZE, sizeof(BV_TOKEN_SIZE), 1, _bv_fp);
+    tmp = fread(&BV_BIN_SIZE, sizeof(BV_BIN_SIZE), 1, _bv_fp);
+    tmp = fread(&BV_NUM_BINS, sizeof(BV_NUM_BINS), 1, _bv_fp);
     tmp = fread(&BV_MULTIPLICITY, sizeof(BV_MULTIPLICITY), 1, _bv_fp);
     if (tmp == 0) {
         fprintf(stderr, "read error while getting BV info from BV File\n");
         fflush(stderr);
     }
 
-    printf("BV_SUBSEQ_SIZE: %d\n", BV_SUBSEQ_SIZE);
-    printf("BV_BUCKET_SIZE: %d\n", BV_BUCKET_SIZE);
-    printf("BV_NUM_BUCKETS: %d\n", BV_NUM_BUCKETS);
+    printf("BV_TOKEN_SIZE: %d\n", BV_TOKEN_SIZE);
+    printf("BV_BIN_SIZE: %d\n", BV_BIN_SIZE);
+    printf("BV_NUM_BINS: %d\n", BV_NUM_BINS);
 
     configBV();
     
@@ -309,7 +309,7 @@ int loadIBitvectors(double *loadTime) {
     tmp = fread(&refGenLength, sizeof(refGenLength), 1, _bv_fp);
     //printf("refGenOff: %d\n", _bv_refGenOff);
     //printf("refGenLength: %d\n", refGenLength);
-    CUR_NUM_BUCKETS = refGenLength / BV_BUCKET_SIZE;
+    CUR_NUM_BINS = refGenLength / BV_BIN_SIZE;
 
     tmp = fread(&bitvectorsSize, sizeof(bitvectorsSize), 1, _bv_fp);
     total_bitvectorsSize += bitvectorsSize;
@@ -332,18 +332,18 @@ unsigned* getBitvectors() {
 
 // returns 0 if it does pass the threshold and we have to check it DP.
 // returns 1 if it does not pass the threshold. 
-// returns 2 if if we skip the verification because we already checked the bucket. 
+// returns 2 if if we skip the verification because we already checked the bin. 
 unsigned checkBitvectors(unsigned genLoc, char **seq, unsigned subseq_num) {
-    memset(read_sequence_count, 0, pow(4, BV_SUBSEQ_SIZE));
+    memset(read_sequence_count, 0, pow(4, BV_TOKEN_SIZE));
     
-    // calculate bucket number from genLoc
-    unsigned bucket_num = (genLoc - (WINDOW_SIZE * subseq_num + nuc_threshold)) / BV_BUCKET_SIZE;
-    // in case of the last bucket. (thats longer than the others) 
-    if (bucket_num >= CUR_NUM_BUCKETS) {
-        bucket_num = CUR_NUM_BUCKETS - 1;
+    // calculate bin number from genLoc
+    unsigned bin_num = (genLoc - (WINDOW_SIZE * subseq_num + nuc_threshold)) / BV_BIN_SIZE;
+    // in case of the last bin. (thats longer than the others) 
+    if (bin_num >= CUR_NUM_BINS) {
+        bin_num = CUR_NUM_BINS - 1;
     }
 
-    if (bucket_num == last_bucket_num) {
+    if (bin_num == last_bin_num) {
         return 2; // this means we've already seen this happen
     }
 
@@ -352,16 +352,16 @@ unsigned checkBitvectors(unsigned genLoc, char **seq, unsigned subseq_num) {
         startTime = getTime();
     }
 
-    last_bucket_num = bucket_num; 
+    last_bin_num = bin_num; 
     
-    unsigned threshold = SEQ_LENGTH - (nuc_threshold*BV_SUBSEQ_SIZE);
-    // run the filter on that bucket against the entire read sequence. 
+    unsigned threshold = SEQ_LENGTH - (nuc_threshold*BV_TOKEN_SIZE);
+    // run the filter on that bin against the entire read sequence. 
     unsigned count = 0;
     if (errThreshold == 0) {
         count = 1;
     }
     int i;
-    for (i = 0; i < SEQ_LENGTH - BV_SUBSEQ_SIZE + 1; i++) {
+    for (i = 0; i < SEQ_LENGTH - BV_TOKEN_SIZE + 1; i++) {
         int hv = bv_hashVal(*seq + i);
         if (hv == -1) return 0;
 
@@ -373,8 +373,8 @@ unsigned checkBitvectors(unsigned genLoc, char **seq, unsigned subseq_num) {
             }
         }
 
-        int tmp_BV_Val = _bitvector[(tmp * (CUR_NUM_BUCKETS) * ints_per_perm) + 
-                                    (bucket_num * ints_per_perm) + (hv / ints_per_perm)]
+        int tmp_BV_Val = _bitvector[(tmp * (CUR_NUM_BINS) * ints_per_perm) + 
+                                    (bin_num * ints_per_perm) + (hv / ints_per_perm)]
                                     >> ((ints_per_perm - 1) - (hv % ints_per_perm));
 
         if (errThreshold == 0) {
@@ -423,8 +423,8 @@ int write_fbv() {
 }
 
 
-int initialize_fbv(unsigned NUM_BUCKETS, unsigned num_reads) {
-    unsigned size = ((NUM_BUCKETS + 7) / 8) * num_reads;
+int initialize_fbv(unsigned NUM_BINS, unsigned num_reads) {
+    unsigned size = ((NUM_BINS + 7) / 8) * num_reads;
 }
 
 

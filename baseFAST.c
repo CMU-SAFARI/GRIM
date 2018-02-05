@@ -441,8 +441,8 @@ int main(int argc, char *argv[])
         freeMem(prevGen, CONTIG_NAME_SIZE);
     }
 
-    printf("BV_SUBSEQ_SIZE: %d\n", BV_SUBSEQ_SIZE);
-    printf("BV_NUM_BUCKETS: %d\n", BV_NUM_BUCKETS);
+    printf("BV_TOKEN_SIZE: %d\n", BV_TOKEN_SIZE);
+    printf("BV_NUM_BINS: %d\n", BV_NUM_BINS);
     printf("BV_MULTIPLICITY: %d\n", BV_MULTIPLICITY);
     printf("BV_COALESCING: %d\n", BV_COALESCING);
     printf("e: %d\n", errThreshold);
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
     printf("error3_fail: %lld\n", error3_fail);
     printf("error2_fail: %lld\n", error2_fail);
     printf("error3_2_fail: %lld\n", error3_2_fail);
-    printf("bv_skipCnt: %lld\n", bv_skipCnt + skip_same_bucket_skip);
+    printf("bv_skipCnt: %lld\n", bv_skipCnt + skip_same_bin_skip);
     printf("bv_totalCheckTime: %f\n", get_bv_totalCheckTime());
     printf("total_seqs: %lld\n", total_seqs);
     printf("total_bv_skip_time(what could have been skipped (each run)): %.20f\n", return_total_bv_skip_time()); 

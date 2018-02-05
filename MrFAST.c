@@ -78,7 +78,7 @@ long long AF_CKS_count = 0;
 double total_bv_skip_time = 0;
 long long num_AF_CKS_runs = 0;
 double total_AF_CKS_runtime = 0;
-long long skip_same_bucket_skip = 0;
+long long skip_same_bin_skip = 0;
 long long DP_fail = 0;
 long long error3_fail = 0;
 long long error2_fail = 0;
@@ -1805,7 +1805,7 @@ void mapSingleEndSeq(unsigned int *l1, int s1, int readNumber, int readSegment,
             }
             else if (tmp_return == 2) {
                 if (last_skip == 1) {
-                    skip_same_bucket_skip++;
+                    skip_same_bin_skip++;
                     continue;
                 }
             }

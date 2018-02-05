@@ -64,11 +64,11 @@ extern unsigned int		CONTIG_MAX_SIZE;
 extern unsigned char	WINDOW_SIZE;		// WINDOW SIZE for indexing/searching
 extern unsigned short	SEQ_LENGTH;		// Sequence(read) length
 // the size of subsequences we use to create bitvectors
-extern unsigned char    BV_SUBSEQ_SIZE; 
-extern unsigned int     BV_NUM_BUCKETS; 
+extern unsigned char    BV_TOKEN_SIZE; 
+extern unsigned int     BV_NUM_BINS; 
 extern unsigned char    PIM_MODE;
-extern unsigned int     BV_BUCKET_SIZE;
-extern unsigned int     BV_EFF_BUCKET_SIZE; 
+extern unsigned int     BV_BIN_SIZE;
+extern unsigned int     BV_EFF_BIN_SIZE; 
 extern unsigned int     BV_MULTIPLICITY; 
 extern unsigned int     BV_COALESCING;
 extern char				*versionNumber;

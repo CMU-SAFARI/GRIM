@@ -85,13 +85,13 @@ int 				maxDiscordantOutput=300;
 unsigned char			errThreshold=255;
 unsigned char			maxHits=0;
 unsigned char			WINDOW_SIZE = 12;
-unsigned char           BV_SUBSEQ_SIZE = 5;
-unsigned int            BV_NUM_BUCKETS = 6553600; // recommended ranges.. 6553600 - 32768000
+unsigned char           BV_TOKEN_SIZE = 5;
+unsigned int            BV_NUM_BINS = 6553600; // recommended ranges.. 6553600 - 32768000
 unsigned char           PIM_MODE = 0;
 unsigned int            BV_MULTIPLICITY = 1; // up to how many sequences are counted in one bkt
 unsigned int            GENOME_SIZE = 3101804739;
-unsigned int            BV_BUCKET_SIZE = 3101804739 / 6553600;
-unsigned int            BV_COALESCING = 0; // whether we convert all locs to bucket before
+unsigned int            BV_BIN_SIZE = 3101804739 / 6553600;
+unsigned int            BV_COALESCING = 0; // whether we convert all locs to bin before
 unsigned int			CONTIG_SIZE;
 unsigned int			CONTIG_MAX_SIZE;
 char                            readGroup[FILE_NAME_LENGTH];
@@ -126,7 +126,7 @@ int parseCommandLine (int argc, char *argv[])
         {"index",		required_argument,  0, 			'i'},
         {"BV_subseq_size", required_argument, 0,        'b'},
         {"bitvectors", required_argument, 0,            't'},
-        {"num_buckets", required_argument, 0,           'k'},
+        {"num_bins", required_argument, 0,           'k'},
         {"bv_multiplicity", required_argument, 0,        'f'},
         {"BV_coalescing", required_argument, 0,          'j'},
         {"search",	required_argument,  0,			's'},
@@ -194,11 +194,11 @@ int parseCommandLine (int argc, char *argv[])
                 WINDOW_SIZE = atoi(optarg);
                 break;
             case 'b': 
-                BV_SUBSEQ_SIZE = atoi(optarg);
+                BV_TOKEN_SIZE = atoi(optarg);
                 break;
             case 'k':
-                BV_NUM_BUCKETS = atoi(optarg);
-                BV_BUCKET_SIZE = GENOME_SIZE / BV_NUM_BUCKETS;
+                BV_NUM_BINS = atoi(optarg);
+                BV_BIN_SIZE = GENOME_SIZE / BV_NUM_BINS;
                 break;
             case 'q':
                 // 0: C mode (DEFAULT)  1 : pim preprocess mode  2 : pim run mode
